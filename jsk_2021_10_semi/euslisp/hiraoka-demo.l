@@ -2,37 +2,31 @@
   (require "models/room73b2-scene.l")
   (setq *room73b2* (room73b2)))
 
-;(when (not (boundp '*nao*))
-;  (require "package://naoeus/nao.l")
-;  (setq *nao* (NaoH25V50)))
+(when (not (boundp '*nao*))
+  (require "package://naoeus/nao.l")
+  (setq *nao* (NaoH25V50)))
 
-;(when (not (boundp '*fetch*))
-;  (require "package://fetcheus/fetch.l")
-;  (setq *fetch* (fetch)))
+(when (not (boundp '*fetch*))
+  (require "package://fetcheus/fetch.l")
+  (setq *fetch* (fetch)))
 
 (when (not (boundp '*spotkinova*))
   (require "package://spotkinovaeus/spotkinova.l")
   (setq *spotkinova* (spotkinova)))
 
-;(when (not (boundp '*pr2*))
-;  (require "package://pr2eus/pr2.l")
-;  (setq *pr2* (pr2)))
-
-;(when (not (boundp '*spotkinova*))
-;  (require "package://spotkinovaeus/spotkinova.l")
-;  (setq *spotkinova* (spotkinova)))
-
 (when (not (boundp '*jaxon*))
   (require "package://cart_humanoid/euslisp/jaxon_red.l")
   (setq *jaxon* (JAXON_RED)))
 
+(when (not (boundp '*pr2*))
+  (require "package://pr2eus/pr2.l")
+  (setq *pr2* (pr2)))
 
-(objects (list *room73b2* *jaxon* *spotkinova*))
+(objects (list *room73b2* *nao* *fetch* *pr2* *spotkinova* *jaxon*))
 
 (defun wait-for-human ()
   (send *jaxon* :locate #f(50 0 1000) :worldpos)
   (send *jaxon* :reset-pose)
-  (send *spotkinova* :locate #f(1500 -1000 500))
   (send *irtviewer* :draw-objects)
   )
 
