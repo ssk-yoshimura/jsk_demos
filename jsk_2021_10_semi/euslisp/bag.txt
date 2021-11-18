@@ -1,0 +1,28 @@
+rosbagのやりかた
+
+
+rosbagのつくりかた
+rossetmaster
+
+~/semi_ws/src/jsk_robot/jsk_pr2_robot/jsk_pr2_startup/jsk_pr2_lifelogに行く
+
+roslaunch rosbag_record.launch rosbag:=fuga
+fuga.bagに何かが作られる
+
+~/.ros/にfuga.bagが作られている
+
+
+
+rosbagの再生しかた
+ここから先は、setmasterしていないターミナルでやる
+
+roslaunch rosbag_play.launch rosbag:=/home/mech-user/.ros/fuga.bag  gui:=true
+fuga.bagが再生される
+
+roscoreをやる
+
+rostopic list | grep image でimageのトピックを探せる
+
+rosrun image_view image_view image:=/kinect_head/rgb/image_rect_color
+画像が見れる
+
