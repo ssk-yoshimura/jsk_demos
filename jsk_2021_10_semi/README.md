@@ -73,12 +73,15 @@ source devel/setup.bash
 
 ## spotkinova
 spotにkinovaというマニピュレータがついたロボットのこと  
+  
 **注意**  
 kinovaはロボットが動いた時に危ないと判断するのでデフォルトではrest-poseにすること  
+  
 **よく使うコマンド**  
 はじめに  
 - load "package://spotkinovaeus/spotkinova-interface.l"
 - spotkinova-init  
+  
 便利関数
 - :kinova-rest-pose
     - kinovaをrest-poseにする、基本的にはこの姿勢にすること  
