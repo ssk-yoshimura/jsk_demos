@@ -63,6 +63,3 @@ source devel/setup.bash
 (setq *pr2* (pr2))
 (objects (list *pr2*))
 ```
-<img src="https://github.com/Takuma-Hiraoka/jsk_demos/blob/jsk_2021_10_semi/jsk_2021_10_semi/Screenshot%20from%202021-11-17%2017-24-58.png" width="500"> 
-<img src="https://github.com/Takuma-Hiraoka/jsk_demos/blob/jsk_2021_10_semi/jsk_2021_10_semi/Screenshot%20from%202021-11-17%2017-25-15.png" width="500">
-<img src="https://github.com/Takuma-Hiraoka/jsk_demos/blob/jsk_2021_10_semi/jsk_2021_10_semi/Screenshot%20from%202021-11-17%2017-22-28.png" width="500"> 
