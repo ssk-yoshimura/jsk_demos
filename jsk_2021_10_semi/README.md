@@ -62,4 +62,33 @@ source devel/setup.bash
 (load "package://pr2eus/pr2.l")
 (setq *pr2* (pr2))
 (objects (list *pr2*))
-```
+
+## 実機の動かし方
+- ネットワークに接続する  
+- rossetmaster (ロボット)
+- rossetip
+- rostopic listで表示されるか確認する
+- roseusで実機に送る
+
+## pepper 情報
+## nao 情報
+## baxter 情報
+## fetch 情報
+## spotkinova　情報
+spotにkinovaというマニピュレータがついたロボットのこと  
+  
+**注意**  
+kinovaはロボットが動いた時に危ないと判断するのでデフォルトではrest-poseにすること  
+  
+**よく使うコマンド**  
+はじめに  
+- load "package://spotkinovaeus/spotkinova-interface.l"
+- spotkinova-init  
+  
+便利関数
+- :kinova-rest-pose
+    - kinovaをrest-poseにする、基本的にはこの姿勢にすること  
+- :start-grasp :stop-grasp
+    - kinovaのエンドエフェクタを掴む、離す
+
+## pr2 情報
