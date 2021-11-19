@@ -9,18 +9,24 @@
   (require "package://pr2eus/pr2-utils.l")
   (setq *pr2* (pr2)))
 
-(setq file (make-cube 265 210 15))
+;; 実機
+(load "package://pr2eus/pr2-interface.l")
+;; (pr2-init)
+;; (send *ri* :speak "hello")
+
+(setq file (make-cube 265 150 15))
 (send file :set-color :green)
 
 (setq file-rhandle (instance cascaded-coords :init :rot #2f((0 0 1) (1 0 0) (0 1 0))))
-(send file-rhandle :locate #f(-100 -105 0) :world)
+(send file-rhandle :locate #f(-100 -75 0) :world)
 (send file :assoc file-rhandle)
 
 (setq file-lhandle (instance cascaded-coords :init :rot #2f((0 0 1) (-1 0 0) (0 -1 0))))
-(send file-lhandle :locate #f(-100 105 0) :world)
+(send file-lhandle :locate #f(-100 75 0) :world)
 (send file :assoc file-lhandle)
 
 (send file :locate #f(700 0 800))
+(send *pr2* :reset-pose)
 
 (setq rhand (send *pr2* :rarm :end-coords))
 (setq lhand (send *pr2* :larm :end-coords))
@@ -77,7 +83,7 @@
 (defun lhand-tilt ()
   (send lhand :assoc file)
   (setq lhand-target (send file-lhandle :copy-worldcoords))
-  (send lhand-target :rotate -0.5 :z lhand-target)
+  (send lhand-target :rotate -0.7 :z lhand-target)
   (pr2-ik-l lhand-target))
 
 ;; 右手を戻す
@@ -96,6 +102,9 @@
   (setq rhand-target (send file-rhandle :copy-worldcoords))
   (send rhand-target :translate #f(-100 0 0) rhand-target)
   (pr2-ik-r rhand-target)
+  (setq lt (send (send *pr2* :larm :end-coords) :copy-worldcoords))
+  (send lt :translate #f(-15 -85 0))
+  (pr2-ik-l lt)
   )
 
 ;; ファイルを開く
@@ -103,22 +112,35 @@
   (setq rhand-target (send file-rhandle :copy-worldcoords))
   (setq rmat (make-coords))
   (send rmat :orient -0.05 :z)
+  (setq av-seq ())
   (dotimes (i 20)
     ;;    (send rhand-target :rotate -0.05 :z lhand-target)
     (send rhand-target :transform rmat lhand-target) 
-    (pr2-ik-r rhand-target)
+    (setq av-seq (cons (pr2-ik-r rhand-target) av-seq))
     (send *irtviewer* :draw-objects)
-    (unix:usleep 100000)
+    (unix:usleep 10000)
     )
+  (setq av-seq (reverse av-seq))
+  av-seq)
+
+(defun open-file2 ()
   (setq rmat2 (make-coords))
   (send rmat2 :orient 0.05 :z)
+  (setq av-seq ())
   (dotimes (i 15)
-    (send rhand-target :transform rmat2 lhand-target) 
-    (pr2-ik-r rhand-target)
+    (send rhand-target :transform rmat2 lhand-target)
+    (setq av-seq (cons (pr2-ik-r rhand-target) av-seq))
+    ;;    (pr2-ik-r rhand-target)
     (send *irtviewer* :draw-objects)
-    (unix:usleep 100000) 
+    (unix:usleep 10000)
     )
+  (setq av-seq (reverse av-seq))
+  av-seq
   )
+
+(defun init-moves ()
+  (send file :locate #f(700 0 800) :world))
+
 
 (defun all-moves ()
   (if (send file :parent) (send (send file :parent) :dissoc file))
@@ -136,6 +158,8 @@
   (lhand-leave)
   (unix:sleep 1) (send *irtviewer* :draw-objects)
   (open-file)
+  (unix:sleep 1) (send *irtviewer* :draw-objects)
+  (open-file2)
   )
 
  (objects (list file file-rhandle file-lhandle *pr2* rhand lhand))
