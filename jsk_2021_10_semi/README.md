@@ -62,7 +62,6 @@ source devel/setup.bash
 (load "package://pr2eus/pr2.l")
 (setq *pr2* (pr2))
 (objects (list *pr2*))
-```
 
 ## 実機の動かし方
 - ネットワークに接続する  
@@ -71,7 +70,11 @@ source devel/setup.bash
 - rostopic listで表示されるか確認する
 - roseusで実機に送る
 
-## spotkinova
+## pepper 情報
+## nao 情報
+## baxter 情報
+## fetch 情報
+## spotkinova　情報
 spotにkinovaというマニピュレータがついたロボットのこと  
   
 **注意**  
@@ -88,5 +91,4 @@ kinovaはロボットが動いた時に危ないと判断するのでデフォ�
 - :start-grasp :stop-grasp
     - kinovaのエンドエフェクタを掴む、離す
 
-
-
+## pr2 情報
