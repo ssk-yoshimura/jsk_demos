@@ -108,6 +108,7 @@ kinovaはロボットが動いた時に危ないと判断するのでデフォ�
 ここから先は、rossetmasterしていないターミナルで行うこと。
 - roslaunch jsk_pr2_startup rosbag_play.launch rosbag:=/home/mech-user/.ros/fuga.bag  gui:=true
 - これでfuga.bagが再生される。gui:=trueとするとrvizも立ち上がる。
+
 便利情報
 - rostopic list | grep image でimageのトピックを探せる
 - rosrun image_view image_view image:=/kinect_head/rgb/image_rect_color で画像が見れる
@@ -116,7 +117,8 @@ kinovaはロボットが動いた時に危ないと判断するのでデフォ�
 **Coral TPUとは?**  
 PCに挿すと、ディープラーニングのような重い画像処理をしてくれる。
 k-okadaに言うと貸してくれる。
-** 使い方 **
+
+**使い方**  
 下のURLの通りにすればできる
 - 注意1 必ず新しくワークスペースを作ること（Pythonのバージョンが異なるため）。一言一句すべて下のURLに書いてある通りにやるといい
 - 注意2 下のURLの、Melodicと書いてある部分をやること。
