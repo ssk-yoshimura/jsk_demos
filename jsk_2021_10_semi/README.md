@@ -62,6 +62,7 @@ source devel/setup.bash
 (load "package://pr2eus/pr2.l")
 (setq *pr2* (pr2))
 (objects (list *pr2*))
+```
 
 ## 実機の動かし方
 - ネットワークに接続する  
