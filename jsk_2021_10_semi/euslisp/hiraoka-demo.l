@@ -1,3 +1,4 @@
+
 (when (not (boundp '*room73b2*))
   (require "models/room73b2-scene.l")
   (setq *room73b2* (room73b2)))
@@ -36,10 +37,21 @@
 	  :debug-view
 	  :no-message
 	  :default-step-height 120)
-  )
+  (if (boundp '*ri*)
+      (send *ri* :go-pos (* 0.001 (aref (send coods-dif :pos) 0)) (* 0.001 (aref (send coods-dif :pos) 1)) (rad2deg (elt (car (euler-angle (send coods-dif :rot))) 2)))
+    )
   nil
   )
+)
 
+(defun move-to (x y th)
+  (send *jaxon* :calc-walk-pattern-from-footstep-list (send *jaxon* :go-pos-params->footstep-list x y th) :debug-view :no-message :default-step-height 120)
+  (if (boundp '*ri*)
+      (send *ri* :go-pos (* 0.001 x) (* 0.001 y) th)
+    )
+  nil
+)
+  
 (defun full-ik (rarm-tgt larm-tgt rleg-tgt lleg-tgt)
   ;;両手先、足先の目標。位置姿勢を維持するかどうか、指令するかどうか
   (let (
@@ -63,10 +75,20 @@
 	  :no-message
 	  )
     )
+  (if (boundp '*ri*)
+      (progn
+	(send *ri* :set-foot-steps (list (make-coords :coords (send *jaxon* :lleg :end-coords :copy-worldcoords) :name :lleg) (make-coords :coords (send *jaxon* :rleg :end-coords :copy-worldcoords) :name :rleg)));;足を動かす
+	(send *ri* :angle-vector (send *jaxon* :angle-vector) 10000)
+	(send *ri* :wait-interpolation)
+	)
+    nil)
+  
   )
 
+;;冷蔵庫の中を探す
 (defun search-fridge()
-  (full-ik nil (make-cascoords :pos #f(5350 1480 1300) :rpy #f(0 0 0)) (make-cascoords :pos #f(4500 1200 40)) t) ;冷蔵庫に手をつく
+  (move-to-spot "fridge-front-spot");冷蔵庫の前まで移動
+  (full-ik t (make-cascoords :pos #f(5350 1480 1300) :rpy #f(0 0 0)) (make-cascoords :pos #f(4500 1200 40)) t) ;冷蔵庫に手をつく
   (unix::sleep 1)
   (full-ik (make-cascoords :pos #f(5350 1480 400) :rpy #f(0 0.85 0)) t t t)  ;冷蔵庫の取手に手をのばす
   (unix::sleep 1)
@@ -86,10 +108,21 @@
   nil
   )
 
+(defun take-book ()
+  (if (boundp '*ri*)
+      (send *ri* :start-grasp :larm) nil
+    )
+  (full-ik t (make-cascoords :pos #f(3000 -2400 680) :rpy #f(0 1.57 0)) t t);;机に左手をつく
+  (full-ik  (make-cascoords :pos #f(2700 -2900 1380) :rpy #f(-1.57 0 0)) t t t);;右手を伸ばす
+  (if (boundp '*ri*)
+      (send *ri* :start-grasp :rarm) nil
+      )
+  (full-ik  (make-cascoords :pos #f(2700 -2400 1380) :rpy #f(-1.57 0 0)) t t t);;書類を取り出す
+  )
+
 (defun all-task ()
   (wait-for-human)
-  (send *jaxon* :calc-walk-pattern-from-footstep-list (send *jaxon* :go-pos-params->footstep-list 2300 0 0) :debug-view :no-message :default-step-height 120);机の横まで移動
-  (move-to-spot "fridge-front-spot");冷蔵庫の前まで移動  
-  (search-fridge)
+  (move-to 3000 -2000 -90);机の前まで移動
+  (take-book)
  )
 
