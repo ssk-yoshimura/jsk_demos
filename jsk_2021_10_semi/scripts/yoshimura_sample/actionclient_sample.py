@@ -1,9 +1,11 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import rospy
 import actionlib
 from jsk_2021_10_semi.msg import *
 
-# ActionClient
+# ActionClientのサンプルプログラム
 
 if __name__ == '__main__':
     rospy.init_node('do_dishes_client')

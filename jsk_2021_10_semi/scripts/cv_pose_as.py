@@ -16,6 +16,12 @@ from jsk_recognition_msgs.msg import PeoplePoseArray
 import actionlib
 from jsk_2021_10_semi.msg import *
 
+# ActionServer
+# ActionClientからgoalが送られると、画像とpose estimatorのtopicを受け取り始める
+# resultを返すときに、画像とpose estimatorの受け取りをやめる
+# yoshimura-ac.lがActionClient
+
+
 class image_converter:
 
     def __init__(self):

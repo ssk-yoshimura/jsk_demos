@@ -14,6 +14,8 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from jsk_recognition_msgs.msg import PeoplePoseArray
 
+# human estimatorと画像の色情報から、書類が適切な位置にあるかを識別する
+
 class image_converter:
 
     def __init__(self):

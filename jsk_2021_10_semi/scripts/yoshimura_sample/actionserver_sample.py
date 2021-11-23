@@ -1,9 +1,11 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import rospy
 import actionlib
 from jsk_2021_10_semi.msg import *
 
-# ActionServer
+# ActionServerの動作確認プログラム
 
 class TargetCoordsServer:
     def __init__(self):
