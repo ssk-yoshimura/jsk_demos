@@ -52,7 +52,7 @@
   nil
 )
   
-(defun full-ik (rarm-tgt larm-tgt rleg-tgt lleg-tgt)
+(defun full-ik (rarm-tgt larm-tgt rleg-tgt lleg-tgt &key (target-centroid-pos (apply #'midpoint 0.5 (send *jaxon* :legs :end-coords :worldpos))))
   ;;両手先、足先の目標。位置姿勢を維持するかどうか、指令するかどうか
   (let (
 	(ra (if (null rarm-tgt) (make-cascoords) (if (eq t rarm-tgt) (send *jaxon* :rarm :end-coords ) rarm-tgt)))
@@ -111,18 +111,22 @@
 (defun take-book ()
   (if (boundp '*ri*)
       (send *ri* :start-grasp :larm) nil
-    )
+      )
   (full-ik t (make-cascoords :pos #f(3000 -2400 680) :rpy #f(0 1.57 0)) t t);;机に左手をつく
   (full-ik  (make-cascoords :pos #f(2700 -2900 1380) :rpy #f(-1.57 0 0)) t t t);;右手を伸ばす
   (if (boundp '*ri*)
       (send *ri* :start-grasp :rarm) nil
       )
   (full-ik  (make-cascoords :pos #f(2700 -2400 1380) :rpy #f(-1.57 0 0)) t t t);;書類を取り出す
+  (send *jaxon* :reset-pose)
+  (full-ik  (make-cascoords :pos #f(2700 -2400 1380) :rpy #f(-1.57 0 0)) t t t)
+  (move-to -1000 0 90)
   )
 
 (defun all-task ()
   (wait-for-human)
-  (move-to 3000 -2000 -90);机の前まで移動
+  (move-to 3000 0 0)
+  (move-to 0 -2000 -90);机の前まで移動
   (take-book)
  )
 
