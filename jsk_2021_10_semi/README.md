@@ -62,6 +62,7 @@ source devel/setup.bash
 (load "package://pr2eus/pr2.l")
 (setq *pr2* (pr2))
 (objects (list *pr2*))
+```
 
 ## 実機の動かし方
 - ネットワークに接続する  
@@ -92,3 +93,41 @@ kinovaはロボットが動いた時に危ないと判断するのでデフォ�
     - kinovaのエンドエフェクタを掴む、離す
 
 ## pr2 情報
+
+```
+rossetmaster pr1040
+
+rossetip
+
+```
+
+## rosbag 情報
+**rosbagとは**  
+実機などを使っているときに、Topicを録画できる。例えば画像のTopicを録画しておけば、家でも画像処理のコードが書ける。
+
+**録画のしかた(pr2)**  
+- rossetmaster (ロボット)
+- launchファイルは~/semi_ws/src/jsk_robot/jsk_pr2_robot/jsk_pr2_startup/jsk_pr2_lifelogにある
+- roslaunch jsk_pr2_startup rosbag_record.launch rosbag:=fuga
+- これで~/.ros/にfuga.bagが作られている。Ctrl+Cで録画終了
+
+**再生のしかた**  
+ここから先は、rossetmasterしていないターミナルで行うこと。
+- roslaunch jsk_pr2_startup rosbag_play.launch rosbag:=/home/mech-user/.ros/fuga.bag  gui:=true
+- これでfuga.bagが再生される。gui:=trueとするとrvizも立ち上がる。
+
+便利情報
+- rostopic list | grep image でimageのトピックを探せる
+- rosrun image_view image_view image:=/kinect_head/rgb/image_rect_color で画像が見れる
+
+## Coral TPU 情報
+**Coral TPUとは?**  
+PCに挿すと、ディープラーニングのような重い画像処理をしてくれる。
+k-okadaに言うと貸してくれる。
+
+**使い方**  
+下のURLの通りにすればできる
+- 注意1 必ず新しくワークスペースを作ること（Pythonのバージョンが異なるため）。一言一句すべて下のURLに書いてある通りにやるといい
+- 注意2 下のURLの、Melodicと書いてある部分をやること。
+
+https://github.com/knorth55/coral_usb_ros
