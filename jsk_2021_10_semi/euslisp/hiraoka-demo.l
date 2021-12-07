@@ -119,12 +119,15 @@
   (demo-prep)
   (chair-prep)
   (remove-chair)
-  (move-to -2300 0 180) ;;本棚の前に移動
+  (move-to 0 -700 180)
+  (move-to 2200 0 0) ;;本棚の前に移動
   (take-book)
-  (move-to -2000 0 90) ;;本棚から離れる
-  (move-to 1000 0 90) ;;机の横に移動
-  (move-to 1500 0 90) ;;机の前に移動
-  (set-binder)
+  (move-to 0 0 0)
+  (move-to -1000 0 0) ;;本棚から離れる
+  (move-to -900 0 90)
+  ;;(move-to 300 0 90) ;;机の横に移動
+  ;;(move-to 1500 0 90) ;;机の前に移動
+  ;;(set-binder)
 ;  (move-to -1000 2000 -90) ;; 次のロボットに道を譲る
  )
 
