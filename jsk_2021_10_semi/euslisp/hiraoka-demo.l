@@ -23,6 +23,11 @@
   (require "package://pr2eus/pr2.l")
   (setq *pr2* (pr2)))
 
+;;hrp2
+;;(require "package://hrpsys_ros_bridge_tutorials/euslisp/hrp2jsknts-interface.l ")
+;;(hrp2jsknts-init)
+;;(setq *jaxon* *hrp2jsknts*)
+
 (objects (list *room73b2* *nao* *fetch* *pr2* *spotkinova* *jaxon*))
 
 (load "hiraoka-chair.l")
@@ -30,7 +35,10 @@
 (load "hiraoka-table.l")
 
 (defun demo-prep ()
-  (send *jaxon* :locate #f(1550 0 1000) :worldpos)
+  (if (boundp '*hrp2jsknts*)
+      (send *jaxon* :locate #f(1550 0 0) :worldpos)
+    (send *jaxon* :locate #f(1550 0 1000) :worldpos)
+    )
   (send *jaxon* :reset-pose)
   (send *irtviewer* :draw-objects)
   )
@@ -119,15 +127,15 @@
   (demo-prep)
   (chair-prep)
   (remove-chair)
-  (move-to 0 -700 180)
-  (move-to 2200 0 0) ;;本棚の前に移動
-  (take-book)
-  (move-to 0 0 0)
-  (move-to -1000 0 0) ;;本棚から離れる
-  (move-to -900 0 90)
-  ;;(move-to 300 0 90) ;;机の横に移動
-  ;;(move-to 1500 0 90) ;;机の前に移動
-  ;;(set-binder)
+;  (move-to 0 -700 180)
+;  (move-to 2200 0 0) ;;本棚の前に移動
+;  (take-book)
+;  (move-to 0 0 0)
+;  (move-to -1000 0 0) ;;本棚から離れる
+;  (move-to -900 0 90)
+;  (move-to 300 0 90) ;;机の横に移動
+;  (move-to 1500 0 90) ;;机の前に移動
+;  (set-binder)
 ;  (move-to -1000 2000 -90) ;; 次のロボットに道を譲る
  )
 
