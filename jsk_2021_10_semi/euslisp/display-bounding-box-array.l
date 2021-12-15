@@ -16,7 +16,8 @@
 
 (setq kct (send *pr2* :head_mount_kinect_rgb_optical_frame_lk))
 
-;; コールバック関数
+
+;; コールバック関数(使わない)
 (defun bounding-box-array-cb (msg)
   (setq *bounding-box-list* (send msg :boxes)) ;; boxesは、BoundingBoxのArray(Euslispではlist)
   ;; BoundingBoxがあれば表示する
@@ -43,7 +44,27 @@
     (send (send *pr2* :head_mount_kinect_ir_link_lk) :draw-on :flush t)
     ))
 
-(ros::subscribe *topic-name* jsk_recognition_msgs::BoundingBoxArray #'bounding-box-array-cb 1)
+;; ソートされたboxについてのコールバック関数
+(defun bounding-box-array-sorted-cb (msg)
+  (setq *bounding-box-list* (send msg :boxes)) ;; boxesは、BoundingBoxのArray(Euslispではlist)
+  ;; BoundingBoxがあれば表示する
+  (when *bounding-box-list*
+    (send *irtviewer* :draw-objects :flush nil)
+    (let* ((b (elt *bounding-box-list* 0))
+	   (dims (ros::tf-point->pos (send b :dimensions)))
+	   (bx (make-cube (elt dims 0) (elt dims 1) (elt dims 2)))
+	   (cam->obj-coords (ros::tf-pose->coords (send b :pose)))
+	   (cam-coords (send kct :copy-worldcoords)))
+
+      (send bx :newcoords (send cam-coords :transform cam->obj-coords))
+      (send bx :worldcoords)
+      (send bx :draw-on :flush nil :color #f(1 0 0)) ;; 描画
+      )
+    (send *irtviewer* :viewer :viewsurface :flush)
+    (send (send *pr2* :head_mount_kinect_ir_link_lk) :draw-on :flush t)
+    ))
+
+(ros::subscribe *topic-name* jsk_recognition_msgs::BoundingBoxArray #'bounding-box-array-sorted-cb 1)
 
 (do-until-key
  (x::window-main-one) ;; IRT viewerの視点を変えられる。見にくければ変えよう
