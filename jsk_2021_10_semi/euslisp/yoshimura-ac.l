@@ -3,6 +3,22 @@
 ;; actionlibクライアントのサンプルプログラム
 
 #|
+12/1 目標
+人の姿勢などを使わないとできないようなことをする。
+例：人が指した場所にあるファイルを選んで取るなど。
+
+その他
+opencv_appsをやってみる。
+
+アイデア
+姿勢座標からポーズを判別するには？
+k近傍法を使う。
+
+-> ポーズを一定時間記録し、csvに保存する
+
+|#
+
+#|
 rosrun jsk_2021_10_semi cv_pose_as.py
 とするとActionサーバができる
 
@@ -18,6 +34,8 @@ yoshimura_clientノード(yoshimura-ac.l)
 
 (ros::roseus "yoshimura_client")
 
+(setq filew 0)
+
 (defun yoshimura-client ()
   (let (goal)
     (if (not (boundp '*c*))
@@ -32,7 +50,7 @@ yoshimura_clientノード(yoshimura-ac.l)
     (warning-message 2 ";; ~A wait-for-result~%" (unix::getpid))
     (send *c* :wait-for-result)
     (warning-message 2 ";; ~A result -> ~A~%" (unix::getpid) (send (send *c* :get-result) :yoshimura_result))
-    (send (send *c* :get-result) :yoshimura_result)
+    (setq filew (send (send *c* :get-result) :yoshimura_result))
     ))
 
 (yoshimura-client)

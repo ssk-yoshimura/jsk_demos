@@ -25,12 +25,26 @@
 (send file-lhandle :locate #f(-100 75 0) :world)
 (send file :assoc file-lhandle)
 
+(setq file-prepare (instance cascaded-coords :init :rot #2f((0 0 1) (-1 0 0) (0 -1 0))))
+(send file-prepare :locate #f(-100 150 0) :world)
+(send file :assoc file-prepare)
+
+(setq file-lhandle-fixed (instance cascaded-coords :init :rot #2f((0 0 1) (-1 0 0) (0 -1 0))))
+(send file-lhandle-fixed :locate #f(570 75 800) :world)
+
 (send file :locate #f(700 0 800))
 (send *pr2* :reset-pose)
 
 (setq rhand (send *pr2* :rarm :end-coords))
 (setq lhand (send *pr2* :larm :end-coords))
 
+;; ファイルを机の上の位置に移動する
+(defun move-file-stand ()
+  (send file :locate #f(800 100 950) :world) ;; 本の位置(yが重要)
+  (send file :orient -1.57 :y :world)
+  (send file :rotate 1.57 :x)
+  )
+   
 ;; 使いません
 (defun rarm-catchfile () 
   (send *pr2* :rarm :inverse-kinematics
@@ -39,6 +53,46 @@
 	:move-target (send *pr2* :rarm :end-coords)
 	:rotation-axis t
 	:debug-view nil)
+  )
+
+;; ファイルの前に手をもってくる
+(defun get-file-on-desk-prepare ()
+  (move-file-stand)
+  (send *pr2* :inverse-kinematics
+	file-prepare
+	:move-target (send *pr2* :larm :end-coords)
+	:use-torso nil
+	:rotation-axis t
+	:rthre (list 1 1 1)
+	)
+  )
+
+;; ファイルをつかむ
+(defun get-file-on-desk ()
+  (move-file-stand)
+  (send *pr2* :inverse-kinematics
+	file-lhandle
+	:move-target (send *pr2* :larm :end-coords)
+	:use-torso nil
+	:rotation-axis t
+	:rthre (list 1 1 1)
+	)
+  )
+
+;; 手を本棚から抜く
+(defun get-file-return ()
+  (send lhand :assoc file)
+  (send *pr2* :larm :move-end-pos #f(-200 0 100) :world))
+
+(defun get-file-return2 ()
+  (send lhand :assoc file)
+  (send *pr2* :larm :move-end-pos #f(-100 -100 0) :world :rotation-axis nil))
+
+;; ファイルを開く姿勢(固定)
+(defun start-open-file ()
+  (pr2-ik-l file-lhandle-fixed)
+  (rhand-leave)
+  ;;(pr2-ik-r file-rhandle)
   )
 
 (defun pr2-ik-both (ltarget rtarget)
@@ -89,7 +143,7 @@
 ;; 右手を戻す
 (defun rhand-catch-again ()
   (setq rhand-target (send rhand :copy-worldcoords))
-  (send rhand-target :translate #f(200 0 0) rhand-target)
+  (send rhand-target :translate #f(250 20 0) rhand-target)
   (pr2-ik-r rhand-target))
 
 ;; 左手を離す、右手を右側にやる
@@ -103,9 +157,12 @@
   (send rhand-target :translate #f(-100 0 0) rhand-target)
   (pr2-ik-r rhand-target)
   (setq lt (send (send *pr2* :larm :end-coords) :copy-worldcoords))
-  (send lt :translate #f(-15 -85 0))
+  (send lt :translate #f(-25 -140 0))
   (pr2-ik-l lt)
   )
+
+;; (send *ri* :start-grasp :gain 0.1)
+
 
 ;; ファイルを開く
 (defun open-file ()
@@ -144,12 +201,18 @@
 
 (defun all-moves ()
   (if (send file :parent) (send (send file :parent) :dissoc file))
-  (send file :locate #f(500 0 800) :world)
+  ;; (send file :locate #f(500 0 800) :world)
   (send *pr2* :reset-pose)
   (send *irtviewer* :draw-objects)
-  (catch-file)
+  (get-file-on-desk-prepare)
   (unix:sleep 1) (send *irtviewer* :draw-objects)
-  (rhand-leave)
+  (get-file-on-desk)
+  (unix:sleep 1) (send *irtviewer* :draw-objects)
+  (get-file-return)
+  (unix:sleep 1) (send *irtviewer* :draw-objects)
+  (get-file-return2)
+  (unix:sleep 1) (send *irtviewer* :draw-objects)
+  (start-open-file)
   (unix:sleep 1) (send *irtviewer* :draw-objects)
   (lhand-tilt)
   (unix:sleep 1) (send *irtviewer* :draw-objects)
@@ -162,4 +225,4 @@
   (open-file2)
   )
 
- (objects (list file file-rhandle file-lhandle *pr2* rhand lhand))
+ (objects (list file file-rhandle file-lhandle file-lhandle-fixed file-prepare *pr2* rhand lhand))
