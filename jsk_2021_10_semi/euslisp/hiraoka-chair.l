@@ -15,7 +15,7 @@
 	    )
     (progn
       (if (boundp '*ri*)
-	    (send *ri* :stop-grasp) nil
+	    ;(send *ri* :stop-grasp) nil
 	    )
       (send *jaxon* :arms :inverse-kinematics
 	    (list (make-cascoords :pos #f(2000 -400 750) :rpy #f(1.57 1.57 0)) (make-cascoords :pos #f(2000 400 750) :rpy #f(-1.57 1.57 0)))
@@ -39,7 +39,7 @@
 	)
       (progn
 	(send *jaxon* :arms :inverse-kinematics
-	      (list (make-cascoords :pos #f(2000 -250 750) :rpy #f(1.57 0.5 0)) (make-cascoords :pos #f(2000 250 750) :rpy #f(-1.57 0.5 0)))
+	      (list (make-cascoords :pos #f(2000 -180 750) :rpy #f(1.57 0.5 0)) (make-cascoords :pos #f(2000 180 750) :rpy #f(-1.57 0.5 0)))
 	      :move-target (list (send *jaxon* :rarm :end-coords) (send *jaxon* :larm :end-coords))
 	      :link-list (list (send *jaxon* :link-list (send *jaxon* :rarm :end-coords :parent)) (send *jaxon* :link-list (send *jaxon* :larm :end-coords :parent))))
 	(if (boundp '*ri*)
@@ -71,7 +71,7 @@
 	)
     (progn
       (send *jaxon* :arms :inverse-kinematics
-	    (list (make-cascoords :pos #f(3500 680 750) :rpy #f(1.57 1.57 0)) (make-cascoords :pos #f(2600 680 750) :rpy #f(-1.57 1.57 0)))
+	    (list (make-cascoords :pos #f(3500 680 750) :rpy #f(3.14 1.57 0)) (make-cascoords :pos #f(2600 680 750) :rpy #f(0 1.57 0)))
 	    :move-target (list (send *jaxon* :rarm :end-coords) (send *jaxon* :larm :end-coords))
 	    :link-list (list (send *jaxon* :link-list (send *jaxon* :rarm :end-coords :parent)) (send *jaxon* :link-list (send *jaxon* :larm :end-coords :parent))))
       )

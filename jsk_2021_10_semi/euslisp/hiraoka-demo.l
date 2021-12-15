@@ -1,4 +1,3 @@
-
 (when (not (boundp '*room73b2*))
   (require "models/room73b2-scene.l")
   (setq *room73b2* (room73b2)))
@@ -27,6 +26,10 @@
 ;;(require "package://hrpsys_ros_bridge_tutorials/euslisp/hrp2jsknts-interface.l ")
 ;;(hrp2jsknts-init)
 ;;(setq *jaxon* *hrp2jsknts*)
+
+;;jaxon
+;;(require "package://hrpsys_choreonoid_tutorials/euslisp/jaxon_jvrc-interface.l")
+;;(jaxon_jvrc-init)
 
 (objects (list *room73b2* *nao* *fetch* *pr2* *spotkinova* *jaxon*))
 
@@ -64,10 +67,10 @@
   nil
 )
   
-(defun full-ik (rarm-tgt larm-tgt rleg-tgt lleg-tgt
+(defun full-ik (rarm-tgt larm-tgt rleg-tgt lleg-tgt foot-step
 			 &key (target-centroid-pos (apply #'midpoint 0.5 (send *jaxon* :legs :end-coords :worldpos)))
 			 )
-  ;;両手先、足先の目標。位置姿勢を維持するかどうか、指令するかどうか
+  ;;両手先、足先の目標。位置姿勢を維持するかどうか、指令するかどうか、足を動かすかどうか
   (let (
 	(ra (if (null rarm-tgt) (make-cascoords) (if (eq t rarm-tgt) (send *jaxon* :rarm :end-coords ) rarm-tgt)))
 	(la (if (null larm-tgt) (make-cascoords) (if (eq t larm-tgt) (send *jaxon* :larm :end-coords ) larm-tgt)))
@@ -91,7 +94,10 @@
     )
   (if (boundp '*ri*)
       (progn
-	(send *ri* :set-foot-steps (list (make-coords :coords (send *jaxon* :lleg :end-coords :copy-worldcoords) :name :lleg) (make-coords :coords (send *jaxon* :rleg :end-coords :copy-worldcoords) :name :rleg)));;足を動かす
+	(if foot-step
+	    (send *ri* :set-foot-steps (list (make-coords :coords (send *jaxon* :lleg :end-coords :copy-worldcoords) :name :lleg) (make-coords :coords (send *jaxon* :rleg :end-coords :copy-worldcoords) :name :rleg)));;足を動かす
+	  nil
+	  )
 	(send *ri* :angle-vector (send *jaxon* :angle-vector) 10000)
 	(send *ri* :wait-interpolation)
 	)
@@ -103,21 +109,21 @@
 ;;冷蔵庫の中を探す //使わない、ikがworld-coords
 (defun search-fridge()
   (move-to-spot "fridge-front-spot");冷蔵庫の前まで移動
-  (full-ik t (make-cascoords :pos #f(5350 1480 1300) :rpy #f(0 0 0)) (make-cascoords :pos #f(4500 1200 40)) t) ;冷蔵庫に手をつく
+  (full-ik t (make-cascoords :pos #f(5350 1480 1300) :rpy #f(0 0 0)) (make-cascoords :pos #f(4500 1200 40)) t t) ;冷蔵庫に手をつく
   (unix::sleep 1)
-  (full-ik (make-cascoords :pos #f(5350 1480 400) :rpy #f(0 0.85 0)) t t t)  ;冷蔵庫の取手に手をのばす
+  (full-ik (make-cascoords :pos #f(5350 1480 400) :rpy #f(0 0.85 0)) t t t t)  ;冷蔵庫の取手に手をのばす
   (unix::sleep 1)
   (setq *handle* (send (send *room73b2* :object "room73b2-hitachi-fiesta-refrigerator") :link :room73b2-hitachi-fiesta-refrigerator-bodyset5))
   (send (send *handle* :parent-link) :dissoc *handle*)
   (send *jaxon* :rarm :end-coords :assoc *handle*)
-  (full-ik (make-cascoords :pos #f(5050 1480 400) :rpy #f(0 0.85 0)) t t t) ;冷蔵庫の引き出しを引く
+  (full-ik (make-cascoords :pos #f(5050 1480 400) :rpy #f(0 0.85 0)) t t t t) ;冷蔵庫の引き出しを引く
   (unix::sleep 1)
   (send *jaxon* :head :angle-vector #f(30 0))
   (unix::sleep 1)
   (send *jaxon* :head :angle-vector #f(-90 0))
   (unix::sleep 1)
   (send *jaxon* :head :angle-vector #f(0 0))
-  (full-ik (make-cascoords :pos #f(5350 1480 400) :rpy #f(0 0.85 0)) t t t)
+  (full-ik (make-cascoords :pos #f(5350 1480 400) :rpy #f(0 0.85 0)) t t t t)
   (unix::sleep 1)
   (send *jaxon* :rarm :end-coords :dissoc *handle*)
   nil
