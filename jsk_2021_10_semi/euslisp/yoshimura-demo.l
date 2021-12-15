@@ -14,6 +14,15 @@
 ;; (pr2-init)
 ;; (send *ri* :speak "hello")
 
+(load "display-bounding-box-array.l")
+
+(defun move-file-stand-with-box ()
+  (setq file-pos (send (get-file-pos) :copy-worldcoords))
+  (send file  :locate (float-vector 800 (elt (send file-pos :worldpos) 1) 950) :world)
+  (send file :orient -1.57 :y :world)
+  (send file :rotate 1.57 :x)
+  )
+
 (setq file (make-cube 265 150 15))
 (send file :set-color :green)
 
@@ -57,7 +66,8 @@
 
 ;; ファイルの前に手をもってくる
 (defun get-file-on-desk-prepare ()
-  (move-file-stand)
+  ;; (move-file-stand)
+  (move-file-stand-with-box)
   (send *pr2* :inverse-kinematics
 	file-prepare
 	:move-target (send *pr2* :larm :end-coords)
@@ -69,7 +79,6 @@
 
 ;; ファイルをつかむ
 (defun get-file-on-desk ()
-  (move-file-stand)
   (send *pr2* :inverse-kinematics
 	file-lhandle
 	:move-target (send *pr2* :larm :end-coords)

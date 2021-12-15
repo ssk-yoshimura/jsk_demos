@@ -21,6 +21,7 @@
 (defun grasp-file ()
   (load "yoshimura-demo.l")
   (pr2reset)
+  (send *pr2* :head-neck-p :joint-angle 30)
   (pr2ri)
   (send *ri* :wait-interpolation)
   (send *ri* :stop-grasp :larm)

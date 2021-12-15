@@ -11,10 +11,11 @@
 (defvar *topic-name* "/kinect_head/depth_registered/boxes")
 (defvar *bounding-box-list* nil)
 
-;; ros::initする
-(ros::roseus "boundingboxarray_subscriber")
+
 
 (setq kct (send *pr2* :head_mount_kinect_rgb_optical_frame_lk))
+
+(setq target (make-coords))
 
 
 ;; コールバック関数(使わない)
@@ -59,15 +60,23 @@
       (send bx :newcoords (send cam-coords :transform cam->obj-coords))
       (send bx :worldcoords)
       (send bx :draw-on :flush nil :color #f(1 0 0)) ;; 描画
+      (setq target bx)
       )
     (send *irtviewer* :viewer :viewsurface :flush)
     (send (send *pr2* :head_mount_kinect_ir_link_lk) :draw-on :flush t)
     ))
 
-(ros::subscribe *topic-name* jsk_recognition_msgs::BoundingBoxArray #'bounding-box-array-sorted-cb 1)
+(defun get-file-pos ()
+  ;; ros::initする
+  (ros::roseus "boundingboxarray_subscriber")
 
-(do-until-key
- (x::window-main-one) ;; IRT viewerの視点を変えられる。見にくければ変えよう
- (ros::spin-once)
- (ros::sleep)
- )
+  (ros::subscribe *topic-name* jsk_recognition_msgs::BoundingBoxArray #'bounding-box-array-sorted-cb 1)
+
+  (do-until-key
+   (x::window-main-one) ;; IRT viewerの視点を変えられる。見にくければ変えよう
+   (ros::spin-once)
+   (ros::sleep)
+   )
+  (format t "~A~%" (send target :worldcoords))
+  (send target :worldcoords)
+  )
