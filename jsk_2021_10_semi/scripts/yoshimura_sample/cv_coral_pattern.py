@@ -42,8 +42,10 @@ class image_converter:
         self.data_count = 0
 
         self.bridge = CvBridge()
-        self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
-        self.pose_sub = rospy.Subscriber("/edgetpu_human_pose_estimator/output/poses", PeoplePoseArray, self.callback_poses)
+        # self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
+        self.image_sub = rospy.Subscriber("/kinect_head/rgb/image_color", Image,self.callback)
+        # self.pose_sub = rospy.Subscriber("/edgetpu_human_pose_estimator/output/poses", PeoplePoseArray, self.callback_poses)
+        self.pose_sub = rospy.Subscriber("/my_human_detector/output/poses", PeoplePoseArray, self.callback_poses)
 
     def callback(self,data):
         try:
@@ -59,8 +61,8 @@ class image_converter:
 
         for i in range(5):
             cv2.circle(gray, (int(self.joint_x[i]), int(self.joint_y[i])), 10, 255, thickness=3)
-        # cv2.imshow("img", img)
-        # cv2.imshow("gray", gray)
+        cv2.imshow("img", img)
+        cv2.imshow("gray", gray)
         cv2.waitKey(3)
 
         # cv2.imwrite('a.jpg', img)
@@ -87,6 +89,7 @@ class image_converter:
             print(self.nose_pos)
 
         # データの保存
+        """
         if self.skip_data > 0:
             self.skip_data -= 1
             return
@@ -103,6 +106,7 @@ class image_converter:
             print("finish recording")
             np.savetxt('testpose.csv', self.joint_data)
             self.data_count += 1
+        """
 
 def main(args):
     rospy.init_node('image_converter', anonymous=True)
