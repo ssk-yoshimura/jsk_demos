@@ -52,3 +52,7 @@
   (send *ri* :angle-vector-sequence avs (list 200))
   (send *ri* :wait-interpolation)
   )
+
+;; 次回試す
+(defun go-forward ()
+  (send *ri* :go-pos 0.01 0 0))
