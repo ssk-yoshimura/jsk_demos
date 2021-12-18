@@ -128,7 +128,7 @@ class image_converter:
             cv2.circle(img, (int(self.joint_x[i]), int(self.joint_y[i])), 10, (255, 255, 255), thickness=3)
             
         cv2.imshow("img", img)
-        # cv2.imshow("gray2", gray2)
+        cv2.imshow("gray2", gray2)
         cv2.waitKey(3)
 
         # cv2.imwrite('a.jpg', img)

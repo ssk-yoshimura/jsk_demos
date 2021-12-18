@@ -16,15 +16,20 @@ from jsk_recognition_msgs.msg import PeoplePoseArray
 
 # human estimatorと画像の色情報から、書類が適切な位置にあるかを識別する
 
+
 class image_converter:
 
     def __init__(self):
 
         self.joint_names = ["left shoulder", "right shoulder", "left elbow", "right elbow", "right wrist"]
         self.joint_size = len(self.joint_names)
-        self.joint_x = np.zeros(self.joint_size)
-        self.joint_y = np.zeros(self.joint_size)
+        self.joint_x = np.ones(self.joint_size)
+        self.joint_y = np.ones(self.joint_size)
         self.fileRect = [0]*4 # ファイルの隅
+        # 直線パラメータ
+        self.a = 1
+        self.b = 1
+        self.c = 1
         
         self.image_pub = rospy.Publisher("image_topic_2",Image, queue_size=1)
 
@@ -47,32 +52,107 @@ class image_converter:
         # 緑色を閾値にして2値化
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         gray = np.zeros((rows, cols))
-        gray[(hsv[:,:,0] > 80) & (hsv[:,:,0] < 100) & (hsv[:,:,1] > 40)] = 255
+        gray[(hsv[:,:,0] > 80) & (hsv[:,:,0] < 100) & (hsv[:,:,1] > 40)] = 255 # 緑
+
+        gray[(hsv[:,:,0] > 170) & (hsv[:,:,0] < 180) & (hsv[:,:,1] > 40)] = 255 # 赤
 
         # 輪郭検出
         gray2 = np.zeros((rows, cols))
         gray = gray.astype(np.uint8)
         gray, contours, hierarchy = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnt_sorted = sorted(contours, key=lambda x : cv2.contourArea(x), reverse=True)
+        cnt_sorted = [cs for cs in cnt_sorted if cv2.contourArea(cs) > 150] # 小さな輪郭は消す
         
         # print(len(contours))
 
         # 最大領域の輪郭を探す
         maxareaidx = 0
         maxarea = 0
+        """
         for i, cnt in enumerate(contours):
             area = cv2.contourArea(cnt)
             if area > maxarea:
-               maxareaidx = i
+kk               maxareaidx = i
                maxarea = area
-
+        """
         go_flag = False
+
+        # 直線パラメータを取得
+        x1 = self.joint_x[3]
+        y1 = self.joint_y[3]
+        x2 = self.joint_x[4]
+        y2 = self.joint_y[4]
+
+        #  矢印の描写
+        cv2.arrowedLine(gray2, (int(x1),int(y1)), (int(x2),int(y2)), 255, 2, tipLength=0.3)
+
+        a = y2-y1
+        b = x1-x2
+        c = y1*x2-x1*y2
+
+        # 直線に最も近い重心を探す
+        def get_nearest(cnt):
+            M = cv2.moments(cnt)
+            if M['m00'] != 0:
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+            else:
+                cx = 1
+                cy = 1
+            dtc = abs(a*cx+b*cy+c) / np.sqrt(a*a + b*b)
+            if (x2-x1)*(cx-x1) + (y2-y1)*(cy-y1) < 0:
+                dtc = dtc + 500
+            return dtc
+    
+
+        # 直線に最も近い輪郭を探す
+        if len(cnt_sorted) > 0:
+            cnt_nearest = min(cnt_sorted, key=get_nearest)
+            x,y,w,h = cv2.boundingRect(cnt_nearest)
+            cv2.rectangle(gray2, (x,y), (x+w, y+h), 255, 6)
+            M = cv2.moments(cnt_nearest)
+            if M['m00'] != 0:
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+            else:
+                cx = 1
+                cy = 1
+            cv2.circle(gray2, (cx, cy), 7, 255, thickness=5)
+            # 直線に最も近い輪郭の色
+            # print(hsv[cy,cx])
+            x,y = cnt_nearest[0][0]
+            print(hsv[y,x])
+
+        # ソート順に描く (コメントアウトすると速くなります)
+        for i in range(min(5, len(cnt_sorted))):
+            gray2 = cv2.drawContours(gray2, [cnt_sorted[i]], 0, 50, 1)
+            x,y,w,h = cv2.boundingRect(cnt_sorted[i])
+            # cv2.rectangle(gray2, (x,y), (x+w, y+h), 255, 3)
+            # 重心も描く
+            M = cv2.moments(cnt_sorted[i])
+            if M['m00'] != 0:
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+            else:
+                cx = 1
+                cy = 1
+            cv2.circle(gray2, (cx, cy), 5, 255, thickness=1)
+
+        # 全部描く
+        """
+        for i in range(len(contours)):
+            gray2 = cv2.drawContours(gray2, [contours[i]], 0, 50, 1)
+            x,y,w,h = cv2.boundingRect(contours[i])
+            cv2.rectangle(gray2, (x,y), (x+w, y+h), 255, 3)
+        """
                
         # 最大領域の外接矩形
+        '''
         if len(contours) > 0:
             gray2 = cv2.drawContours(gray2, [contours[maxareaidx]], 0, 100, 1)
             self.fileRect = cv2.boundingRect(contours[maxareaidx])
             x, y, w, h = self.fileRect
-            cv2.rectangle(gray2, (x,y), (x+w, y+h), 255, 3)
+            # cv2.rectangle(gray2, (x,y), (x+w, y+h), 255, 3)
 
             # 発進してよいかの判別
             """
@@ -89,6 +169,7 @@ class image_converter:
 
             goc = [255, 255, 255] if go_flag else [0, 0, 255]
             cv2.rectangle(img, (x,y), (x+w, y+h), goc, 3)
+        '''
             
         if go_flag:
             print("go_flag is " + str(go_flag))
@@ -101,7 +182,7 @@ class image_converter:
             cv2.circle(img, (int(self.joint_x[i]), int(self.joint_y[i])), 10, (255, 255, 255), thickness=3)
             
         cv2.imshow("img", img)
-        # cv2.imshow("gray2", gray2)
+        cv2.imshow("gray2", gray2)
         cv2.waitKey(3)
 
         # cv2.imwrite('a.jpg', img)
@@ -121,7 +202,7 @@ class image_converter:
                 self.joint_x[i] = data.poses[0].poses[idx].position.x
                 self.joint_y[i] = data.poses[0].poses[idx].position.y
                 # print(v + ' ' + str(self.joint_x[i]) + ' ' + str(self.joint_y[i]))
-
+        
 def main(args):
     rospy.init_node('image_converter', anonymous=True)
     ic = image_converter()

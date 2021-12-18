@@ -100,6 +100,7 @@ rossetmaster pr1040
 rossetip
 
 ```
+192.のネットワークだと繋がらないので注意。113.11.のやつを使う
 
 ## rosbag 情報
 **rosbagとは**  
@@ -131,3 +132,14 @@ k-okadaに言うと貸してくれる。
 - 注意2 下のURLの、Melodicと書いてある部分をやること。
 
 https://github.com/knorth55/coral_usb_ros
+
+**便利情報**
+pr2の中ではすでにcoralがあるので次のようにしてノード名を変えるとよく、またcompressedにすると処理が早くなってよい
+```
+roslaunch --screen coral_usb edgetpu_human_pose_estimator.launch INPUT_IMAGE:=/kinect_head/rgb/image_color nodename:=my_human_detector IMAGE_TRANSPORT:=compressed
+rosrun image_view image_view image:=/my_human_detector/output/image
+```
+次のようにするとlaunchファイルを見なくても引数がわかる
+```
+roslaunch --screen coral_usb edgetpu_human_pose_estimator.launch --ros-arg
+```
