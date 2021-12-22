@@ -152,7 +152,7 @@
 ;; 右手を戻す
 (defun rhand-catch-again ()
   (setq rhand-target (send rhand :copy-worldcoords))
-  (send rhand-target :translate #f(250 20 0) rhand-target)
+  (send rhand-target :translate #f(250 30 0) rhand-target)
   (pr2-ik-r rhand-target))
 
 ;; 左手を離す、右手を右側にやる

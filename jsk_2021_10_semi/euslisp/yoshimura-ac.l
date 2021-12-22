@@ -35,6 +35,7 @@ yoshimura_clientノード(yoshimura-ac.l)
 (ros::roseus "yoshimura_client")
 
 (setq filew 0)
+(setq color 0)
 
 (defun yoshimura-client ()
   (let (goal)
@@ -50,7 +51,16 @@ yoshimura_clientノード(yoshimura-ac.l)
     (warning-message 2 ";; ~A wait-for-result~%" (unix::getpid))
     (send *c* :wait-for-result)
     (warning-message 2 ";; ~A result -> ~A~%" (unix::getpid) (send (send *c* :get-result) :yoshimura_result))
-    (setq filew (send (send *c* :get-result) :yoshimura_result))
+    (setq color (send (send *c* :get-result) :yoshimura_result))
     ))
 
 (yoshimura-client)
+
+(setq is_green 1)
+
+(if (> color 100) (setq is_green 0))
+(if (< color 40) (setq is_green 0))
+
+(cond
+ ((= is_green 1) (send *ri* :speak-jp "みどりのファイルをよみます"))
+ ((= is_green 0) (send *ri* :speak-jp "みどりじゃないよ")))
