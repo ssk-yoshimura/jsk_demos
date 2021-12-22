@@ -1,0 +1,31 @@
+@startuml
+|PR2|
+start
+partition ssk-yoshimura {
+  :本をとって読む;
+}
+
+|HRP2|
+partition Takuma-Hiraoka {
+  :邪魔な椅子を掴む;
+  :椅子を運んでどける;
+  :他のロボットに道をあける;
+}
+
+|JAXON|
+partition Takuma-Hiraoka {
+  :棚の前まで移動する;
+  :レポート用紙を取り出す;
+  :机にレポート用紙を置く;
+}
+
+|fetch|
+partition YUKINA-3252 {
+  :文字を書く;
+}
+
+|spot|
+partition s-yuzaki {
+  :レポートを持っていく;
+}
+@enduml

@@ -1,6 +1,6 @@
-;;(send *jaxon* :move-to (make-cascoords :pos #f(4700 -1200 890) :rpy #f(0 0 0)) :world)
+;(send *jaxon* :move-to (make-cascoords :pos #f(3700 -1700 890) :rpy #f(0 0 0)) :world)
 (defun set-binder ()
-  (full-ik (make-cascoords :pos #f(5200 -1600 900) :rpy #f(0 0.78 -1.57)) nil t t nil) ;;机の上にバインダーを置く
+  (full-ik (make-cascoords :pos #f(4200 -1900 900) :rpy #f(0 0.78 -1.57)) nil t t nil) ;;机の上にバインダーを置く
   (print "離してください")
   (read-char)
   (send *jaxon* :reset-pose)
