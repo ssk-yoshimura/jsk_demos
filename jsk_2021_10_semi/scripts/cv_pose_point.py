@@ -13,8 +13,12 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from jsk_recognition_msgs.msg import PeoplePoseArray
+import actionlib
+from jsk_2021_10_semi.msg import *
 
-# human estimatorと画像の色情報から、書類が適切な位置にあるかを識別する
+
+# human estimatorと画像の色情報から、人が指している方向の色を入手する
+# actionlibで色を送る
 
 
 class image_converter:
@@ -30,6 +34,10 @@ class image_converter:
         self.a = 1
         self.b = 1
         self.c = 1
+
+        self.goalVal = 0
+
+        self.color = 0
         
         self.image_pub = rospy.Publisher("image_topic_2",Image, queue_size=1)
 
@@ -37,8 +45,32 @@ class image_converter:
         # self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
         # self.pose_sub = rospy.Subscriber("/edgetpu_human_pose_estimator/output/poses", PeoplePoseArray, self.callback_poses)
 
+        # self.image_sub = rospy.Subscriber("/kinect_head/rgb/image_color", Image,self.callback)
+        # self.pose_sub = rospy.Subscriber("/my_human_detector/output/poses", PeoplePoseArray, self.callback_poses)
+        self.server = actionlib.SimpleActionServer('yoshimura', YoshimuraAction, self.execute, False)
+        self.server.start()
+    
+    # ActionServerの関数
+    def execute(self, goal):
+        print ("goal is" + str(goal.yoshimura_goal))
+        rate = rospy.Rate(10)
         self.image_sub = rospy.Subscriber("/kinect_head/rgb/image_color", Image,self.callback)
         self.pose_sub = rospy.Subscriber("/my_human_detector/output/poses", PeoplePoseArray, self.callback_poses)
+        # self.image_sub = rospy.Subscriber("/usb_cam/image_raw",Image,self.callback)
+        # self.pose_sub = rospy.Subscriber("/edgetpu_human_pose_estimator/output/poses", PeoplePoseArray, self.callback_poses)
+        while self.goalVal < 30:
+            rate.sleep()
+            if rospy.is_shutdown():
+                break
+        self.image_sub.unregister()
+        self.pose_sub.unregister()
+        cv2.destroyAllWindows()
+        result = self.server.get_default_result()
+        result.yoshimura_result = self.color #hsvのhの値をresultとする
+        print ("result is " + str(result.yoshimura_result))
+        self.goalVal = 0
+        self.filew = []
+        self.server.set_succeeded(result)
 
     # 画像処理のコールバック関数
     def callback(self,data):
@@ -50,29 +82,23 @@ class image_converter:
         (rows,cols,channels) = img.shape
 
         # 緑色を閾値にして2値化
-
-        """
-        h95以上で青
-        h80~95で緑
-        hそれ以下で黃
-        """
-
-        
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         gray = np.zeros((rows, cols))
-        gray[(hsv[:,:,0] > 60) & (hsv[:,:,0] < 95) & (hsv[:,:,1] > 20)] = 255 # 緑
-        gray[(hsv[:,:,0] > 95) & (hsv[:,:,0] < 115) & (hsv[:,:,1] > 40)] = 255 # 青
-        # gray[(hsv[:,:,0] > 12) & (hsv[:,:,0] < 25) & (hsv[:,:,1] > 40)] = 255 # 黄old
+        # gray[(hsv[:,:,0] > 80) & (hsv[:,:,0] < 100) & (hsv[:,:,1] > 40)] = 255 # 緑
+
+        gray[(hsv[:,:,0] > 60) & (hsv[:,:,0] < 100) & (hsv[:,:,1] > 20)] = 255 # 緑
+        gray[(hsv[:,:,0] > 100) & (hsv[:,:,0] < 115) & (hsv[:,:,1] > 80)] = 255 # 青
         gray[(hsv[:,:,0] >= 20) & (hsv[:,:,0] <= 40) & (hsv[:,:,1] > 80)] = 255 # 黄
 
-        # gray[(hsv[:,:,0] > 170) & (hsv[:,:,0] < 180) & (hsv[:,:,1] > 40)] = 255 # 赤
+        # gray[(hsv[:,:,0] > 175) & (hsv[:,:,0] < 180) & (hsv[:,:,1] > 40)] = 255 # 赤
+        # 赤は誤認識しやすいので、青にする
 
         # 輪郭検出
         gray2 = np.zeros((rows, cols))
         gray = gray.astype(np.uint8)
         gray, contours, hierarchy = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnt_sorted = sorted(contours, key=lambda x : cv2.contourArea(x), reverse=True)
-        cnt_sorted = [cs for cs in cnt_sorted if cv2.contourArea(cs) > 150] # 小さな輪郭は消す
+        cnt_sorted = [cs for cs in cnt_sorted if cv2.contourArea(cs) > 200] # 小さな輪郭は消す
         
         # print(len(contours))
 
@@ -101,7 +127,7 @@ kk               maxareaidx = i
         b = x1-x2
         c = y1*x2-x1*y2
 
-        # 直線に最も近い重心を探す
+        # 直線に最も近い重心を探す関数
         def get_nearest(cnt):
             M = cv2.moments(cnt)
             if M['m00'] != 0:
@@ -114,7 +140,8 @@ kk               maxareaidx = i
             if (x2-x1)*(cx-x1) + (y2-y1)*(cy-y1) < 0:
                 dtc = dtc + 500
             return dtc
-    
+
+        h_color = 0
 
         # 直線に最も近い輪郭を探す
         if len(cnt_sorted) > 0:
@@ -132,7 +159,20 @@ kk               maxareaidx = i
             # 直線に最も近い輪郭の色
             # print(hsv[cy,cx])
             x,y = cnt_nearest[0][0]
-            print(hsv[y,x])
+            h_color = hsv[cy,cx][0]
+            print(y,x)
+            # print(h_color)
+
+        # 色が変わらないかどうかで判別
+        print(abs(int(self.color) - int(h_color)))
+        if abs(int(self.color) - int(h_color)) < 20:
+            self.goalVal += 1
+        else:
+            self.goalVal = 0
+
+        self.color = h_color
+
+        print("goalVal is " + str(self.goalVal) + ", h is " + str(h_color))
 
         # ソート順に描く (コメントアウトすると速くなります)
         for i in range(min(5, len(cnt_sorted))):
@@ -181,12 +221,7 @@ kk               maxareaidx = i
             goc = [255, 255, 255] if go_flag else [0, 0, 255]
             cv2.rectangle(img, (x,y), (x+w, y+h), goc, 3)
         '''
-            
-        if go_flag:
-            print("go_flag is " + str(go_flag))
-        else:
-            print("no")
-            
+                        
         # 人間の関節描画
         for i in range(self.joint_size):
             cv2.circle(gray2, (int(self.joint_x[i]), int(self.joint_y[i])), 10, 255, thickness=3)

@@ -61,18 +61,22 @@
       (send bx :worldcoords)
       (send bx :draw-on :flush nil :color #f(1 0 0)) ;; 描画
       (setq target bx)
+      (send target :translate #f(0 10 0) :world)
       )
     (send *irtviewer* :viewer :viewsurface :flush)
     (send (send *pr2* :head_mount_kinect_ir_link_lk) :draw-on :flush t)
     ))
 
 (defun get-file-pos ()
+  ;; 指したファイルの色を得る
+  (load "yoshimura-ac.l")
+  (when (= is_green 0) (exit))
   ;; ros::initする
   (ros::roseus "boundingboxarray_subscriber")
 
   (ros::subscribe *topic-name* jsk_recognition_msgs::BoundingBoxArray #'bounding-box-array-sorted-cb 1)
 
-  (do-until-key
+  (dotimes (i 10)
    (x::window-main-one) ;; IRT viewerの視点を変えられる。見にくければ変えよう
    (ros::spin-once)
    (ros::sleep)

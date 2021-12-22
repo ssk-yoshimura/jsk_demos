@@ -25,7 +25,7 @@
   (pr2ri)
   (send *ri* :wait-interpolation)
   (send *ri* :stop-grasp :larm)
-  (get-file-on-desk-prepare) ;; つかむ準備
+  (get-file-on-desk-prepare) ;; つかむ準備(認識)
   (pr2ri)
   (send *ri* :wait-interpolation)
   (get-file-on-desk) ;; つかむ
@@ -89,6 +89,7 @@
   (setq avs (open-file2))
   (send *ri* :angle-vector-sequence avs (list 200))
   (send *ri* :wait-interpolation)
+  (send *ri* :speak-jp "おかだ先生に年賀状を送ります")
   )
 
 ;; 次回試す
