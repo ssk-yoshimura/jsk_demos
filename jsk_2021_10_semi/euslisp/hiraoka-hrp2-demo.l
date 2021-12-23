@@ -27,8 +27,8 @@
   (setq *hrp2jsknts* (instance hrp2jsknts-robot :init)))
 
 ;;hrp2
-(require "package://hrpsys_ros_bridge_tutorials/euslisp/hrp2jsknts-interface.l ")
-(hrp2jsknts-init)
+;;(require "package://hrpsys_ros_bridge_tutorials/euslisp/hrp2jsknts-interface.l ")
+;;(hrp2jsknts-init)
 
 ;;jaxon
 ;;(require "package://hrpsys_choreonoid_tutorials/euslisp/jaxon_jvrc-interface.l")
@@ -139,17 +139,9 @@
   (demo-prep)
   (chair-prep)
   (remove-chair-hrp2) ;;hrp2 通り道の椅子をどける
-;  (send *jaxon* :locate #f(2000 0 0)) ;;現実環境で実行するため
-;  (move-to *jaxon* 960 -2130 -90) ;;jaxon 本棚の前に移動
-					;  (take-book) ;;jaxon バインダーをとる
   (print "移動します")
   (read-char)
   (move-to *hrp2jsknts* 0 500 -180) ;;hrp2は次のロボットのために道を開ける
-  (move-to *hrp2jsknts* -500 0 0)
-;  (move-to *jaxon* 0 0 0)
-;  (move-to *jaxon* -500 0 0);;本棚から離れる
-;  (move-to *jaxon* 0 0 90) 
-;  (set-binder)
-  ;(move-to *jaxon* 0 1000 -180) ;;次のロボットに道を譲る
+  (move-to *hrp2jsknts* -700 0 0)
  )
 
