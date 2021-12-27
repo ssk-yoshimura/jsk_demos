@@ -9,7 +9,7 @@
 (defun remove-chair-hrp2 ()
   ;;椅子の横に手をもってくる
   (send *hrp2jsknts* :arms :inverse-kinematics
-	(list (make-cascoords :pos #f(1900 -190 750) :rpy #f(0 0 0)) (make-cascoords :pos #f(1900 190 750) :rpy #f(0 0 0)))
+	(list (make-cascoords :pos #f(1900 -200 750) :rpy #f(0 0 0)) (make-cascoords :pos #f(1900 200 750) :rpy #f(0 0 0)))
 	:move-target (list (send *hrp2jsknts* :rarm :end-coords) (send *hrp2jsknts* :larm :end-coords))
 	:link-list (list (send *hrp2jsknts* :link-list (send *hrp2jsknts* :rarm :end-coords :parent)) (send *hrp2jsknts* :link-list (send *hrp2jsknts* :larm :end-coords :parent)))
 	)
