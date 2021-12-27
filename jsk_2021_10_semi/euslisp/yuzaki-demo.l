@@ -66,9 +66,13 @@
   (spotkinova-init)
 )
 
-(defun body-updown (height)
+(defun body-posture (x y z rot-r rot-p rot-y)
   (send *spotkinova* :body-inverse-kinematics
-        (make-coords :pos (float-vector 0 0 height) :rpy (float-vector 0 0 0)))
+        (make-coords :pos (float-vector x y z) :rpy (float-vector rot-r rot-p rot-y)))
+)
+
+(defun body-updown (height)
+  (body-posture 0 0 height 0 0 0)
 )
 
 (defun hand-catch ()
@@ -90,6 +94,14 @@
   )
 )
 
+(defun zikki-send-posture ()
+  (when  (boundp '*ri*)
+    (format t "zikki daze~%")
+    (send *ri* :body-pose (send *spotkinova* :copy-worldcoords))
+    (send *ri* :wait-interpolation)
+  )
+)
+
 (defun zikki-send-angle (angle)
   (when  (boundp '*ri*)
     (format t "zikki daze~%")
@@ -98,11 +110,39 @@
   )
 )
 
-(defun zikki-send-angle-sequence (angles)
+(defun zikki-send-angle-sequence (angles times)
   (when  (boundp '*ri*)
     (format t "zikki daze~%")
-    (send *ri* :angle-vector-sequence angles)
+    (send *ri* :angle-vector-sequence angles times)
     (send *ri* :wait-interpolation)
+  )
+)
+
+(defun zikki-go-pos (x y theta)
+  (when  (boundp '*ri*)
+    (format t "zikki daze~%")
+    (send *ri* :go-pos x y theta)
+    (format t "hoge~%")
+    (send *ri* :wait-interpolation)
+  )
+)
+
+(defun zikki-go-to-spot (id)
+  (when  (boundp '*ri*)
+    (format t "zikki daze~%")
+    (send *ri* :go-to-spot id)
+    (format t "hoge~%")
+    (send *ri* :wait-interpolation)
+  )
+)
+
+(defun zikki-battery-check ()
+  (when  (boundp '*ri*)
+    (format t "zikki daze~%")
+    (setq spot-battery-msg (one-shot-subscribe "spot/status/battery_percentage" std_msgs::Float32))
+    (setq laptop-battery-msg (one-shot-subscribe "spot/status/laptop_battery_percentage" std_msgs::Float32))
+    (format t "spot battery percentage:~f~%" (send spot-battery-msg :data))
+    (format t "laptop battery percentage:~f~%" (send laptop-battery-msg :data))
   )
 )
 ;;;;;;;;;; ↑基本となる関数たち ;;;;;;;;;;
@@ -140,7 +180,8 @@
 )
 ;;;;;;;;;; ↑お遊び ;;;;;;;;;;
 
-;;;;;;;;;; ↓レポート運び(変更中のため動かない) ;;;;;;;;;;
+;;;;;;;;;; ↓レポート運び ;;;;;;;;;;
+;[便利関数]カメラでレポートを見るときの姿勢
 (defun posture-for-camera ()
   (body-updown -100)
 
@@ -152,24 +193,36 @@
   (send *spotkinova* :kinova_joint_5 :joint-angle 120)
   (send *spotkinova* :kinova_joint_6 :joint-angle 70)
 
-  (when  (boundp '*ri*)
-    (format t "zikki daze~%")
-    (send *ri* :body-pose (send *spotkinova* :copy-worldcoords))
-    (send *ri* :wait-interpolation)
-    (send *ri* :angle-vector (send *spotkinova* :angle-vector) :fast)
-    (send *ri* :wait-interpolation)
-  )
+  (zikki-send-posture)
+  (zikki-send-angle (send *spotkinova* :angle-vector))
 )
 
-(defun wait-for-report ()
-  ;(send *spotkinova* :move-to (make-coords :pos #f(3000 500 0) :rpy (float-vector pi/2 0 0)) :world)
-  ;(send *spotkinova* :locate #f(0 0 550))
+;[便利関数]移動する時の姿勢
+(defun posture-for-move ()
+  (send *spotkinova* :kinova-rest-pose)
+  (zikki-send-angle (send *spotkinova* :angle-vector))
 
+  (body-updown 0)
+  (zikki-send-posture)
+)
+
+;いい感じの位置にしてからこの関数で位置をずらす
+(defun wait-for-report-pre ()
+  (posture-for-move)
+  (zikki-go-pos 0 0.8 0)
+
+  (send *irtviewer* :draw-objects)
+)
+
+;レポートを回収する場所に移動して待機
+(defun wait-for-report ()
+  (zikki-go-pos 0 -0.8 0)
   (posture-for-camera)
 
   (send *irtviewer* :draw-objects)
 )
 
+;机の上に完全にあると回収できないので予備動作としてスライド
 (defun catch-report-pre-slide ()
   ;topicうけとる
   (setq *paper-get-flag* nil)
@@ -187,7 +240,7 @@
     (ros::spin-once)
     (ros::sleep)
     (if *paper-get-flag* (return))
-    (if (> topic-wait-time 5.0) (return)))
+    (if (> topic-wait-time 10.0) (return)))
 
   ;トピックの処理
   (if *paper-get-flag* 
@@ -208,21 +261,16 @@
       ;一応開けておく
       (hand-release)
 
-      ;必要な座標で逆運動学
-      ;(send *spotkinova* :reset-pose)     
+      ;必要な座標で逆運動学     
       (setq paper-pos (send body-to-paper :pos))
 
-      ;(arm-move-from-robot-rotx (- (elt paper-pos 0) 0) (+ (elt paper-pos 1) 50) 400 1.57 -1.57)
-      ;(setq slide_wait_point (send *spotkinova* :angle-vector))
-
-      (arm-move-from-robot-rotx (- (elt paper-pos 0) 50) (+ (elt paper-pos 1) 70) (+ (elt paper-pos 2) 20) 1.57 -1.57)
+      (arm-move-from-robot-rotx (- (elt paper-pos 0) 80) (+ (elt paper-pos 1) 70) (+ (elt paper-pos 2) 20) 1.57 -1.57)
       (setq slide_start_point (send *spotkinova* :angle-vector))
 
       (arm-move-from-robot-rotx (- (elt paper-pos 0) 200) (+ (elt paper-pos 1) 70) (+ (elt paper-pos 2) 20) 1.57 -1.57)
       (setq slide_end_point (send *spotkinova* :angle-vector))
       
       ;スライドさせる軌道
-      ;(zikki-send-angle slide_wait_point)
       (zikki-send-angle slide_start_point)
       (zikki-send-angle slide_end_point)
 
@@ -236,6 +284,7 @@
   )
 )
 
+;レポートを回収する
 (defun catch-report ()
   ;topicうけとる
   (setq *paper-get-flag* nil)
@@ -253,7 +302,7 @@
     (ros::spin-once)
     (ros::sleep)
     (if *paper-get-flag* (return))
-    (if (> topic-wait-time 5.0) (return)))
+    (if (> topic-wait-time 10.0) (return)))
 
   ;トピックの処理
   (if *paper-get-flag* 
@@ -306,6 +355,7 @@
   )
 )
 
+;レポートをspotの上にのせる
 (defun store-report ()
   (send *spotkinova* :kinova_joint_1 :joint-angle 0)
   (send *spotkinova* :kinova_joint_2 :joint-angle 0)
@@ -337,22 +387,32 @@
   (zikki-send-angle (send *spotkinova* :angle-vector))
 )
 
+;レポートを先生のところまで持っていく
 (defun carry-report ()
-  (send *spotkinova* :head :move-end-pos #f(0 0 300) :local :debug-view t :rotation-axis nil)  ;後ろ、上、左
-  (unix:usleep 1000000)
-  (send *spotkinova* :move-to (make-coords :pos #f(3000 0 0) :rpy (float-vector pi/2 0 0)) :world)
-  (send *spotkinova* :locate #f(0 0 550))
-  (send *irtviewer* :draw-objects)
-  (unix:usleep 100000)
-  (send *spotkinova* :move-to (make-coords :pos #f(3000 0 0) :rpy (float-vector pi 0 0)) :world)
-  (send *spotkinova* :locate #f(0 0 550))
-  (send *irtviewer* :draw-objects)
-  (unix:usleep 100000)
-  (send *spotkinova* :move-to (make-coords :pos #f(1000 0 0) :rpy (float-vector pi 0 0)) :world)
-  (send *spotkinova* :locate #f(0 0 550))
-  (send *irtviewer* :draw-objects)
+  (posture-for-move)
+
+  ;ちょっと動かしてマーカーを読みやすくする
+  (zikki-go-pos 0 0 -90)
+  (zikki-go-pos 0.5 0 0)
+  (zikki-go-to-spot "eng2_JSKEntrance")
+  ;(zikki-go-to-spot "eng2_73A2")
+
+  ;レポートとれよ！の姿勢
+  (body-posture 0 0 0 0 0 0.2)
+  (zikki-send-posture)
+  (unix:usleep 3000000)
+  ;(send *ri* :speak-jp "あけましておめでとうございます")
+  (send *ri* :speak "happy new year")
+  (unix:usleep 3000000)
 )
 
+;73B2に帰る
+(defun go-home ()
+  (posture-for-move)
+  (zikki-go-to-spot "eng2_73B2")
+)
+
+;すべてのタスクを行う
 (defun all-task ()
   (wait-for-report)
   (unix:usleep 3000000)
@@ -363,7 +423,7 @@
   ;(carry-report)
 )
 
-;;;;;;;;;; ↑レポート運び(変更中のため動かない) ;;;;;;;;;;
+;;;;;;;;;; ↑レポート運び ;;;;;;;;;;
 
 ;メッセージの受け取り
 ;; callback function
