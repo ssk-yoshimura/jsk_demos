@@ -1,5 +1,6 @@
 #!/usr/bin/env roseus
 
+
 ;; actionlibクライアントのサンプルプログラム
 
 #|
