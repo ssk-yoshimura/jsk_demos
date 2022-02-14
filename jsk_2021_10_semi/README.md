@@ -73,6 +73,43 @@ source devel/setup.bash
 
 ## pepper 情報
 ## nao 情報
+https://github.com/jsk-ros-pkg/jsk_demos/issues/1347
+### 環境構築
+pynaoqi-python2.7-2.5.5.5-linux64をダウンロードして
+```
+mkdir pynaoqi
+unzip pynaoqi-python2.7-2.5.5.5-linux64.zip
+mv pynaoqi-python2.7-2.5.5.5-linux64 pynaoqi
+sudo apt install python-gobject-2
+```
+
+.bashrcに以下を追加
+```
+# Please use Python NAOqi SDK version >= 2.5.5 (https://github.com/jsk-ros-pkg/jsk_robot/issues/1099)                                                          
+export PYTHONPATH=$HOME/pynaoqi/pynaoqi-python2.7-2.5.5.5-linux64/lib/python2.7/site-packages:$PYTHONPATH
+export NAO_IP=133.11.216.130 #naoを起動後ボタンを押してnaoが喋るIPアドレス
+```
+
+### 実機の動かし方
+ノードの立ち上げ
+```
+rossetip
+roslaunch jsk_nao_startup jsk_nao_startup.launch network_interface:=(ifconfigで出てくる値)
+```
+例えば無線のときは
+```
+roslaunch jsk_nao_startup jsk_nao_startup.launch network_interface:=wlp2s0
+```
+eus
+```
+roscd jsk_2021_10_semi/euslisp
+(load "nao-utils.l")
+(nao-init)
+(send *nao* :reset-pose)
+(send *ri* :servo-on)
+(send *ri* :angle-vector (send *nao* :angle-vector)
+```
+
 ## baxter 情報
 ## fetch 情報
 ## spotkinova　情報
