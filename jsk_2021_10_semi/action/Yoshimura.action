@@ -1,8 +1,10 @@
 # define the goal
 uint32 yoshimura_goal
+int32 yoshimura_goal_change
 ---
 # define the result
 uint32 yoshimura_result
+float32 yoshimura_result_angle
 ---
 # define a feedback message
 uint32 yoshimura_feedback
