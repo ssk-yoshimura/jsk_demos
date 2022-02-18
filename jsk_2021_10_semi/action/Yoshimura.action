@@ -1,6 +1,8 @@
 # define the goal
 uint32 yoshimura_goal
 int32 yoshimura_goal_change
+int32 yoshimura_goal_num
+int32 yoshimura_goal_score
 ---
 # define the result
 uint32 yoshimura_result

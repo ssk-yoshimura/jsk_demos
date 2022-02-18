@@ -71,15 +71,15 @@
 ;; ikを先に解いておく
 (defun bik-ri-ik-pre ()
   (setq angle_num 0)
-  (setq angle_num_max 6)
+  (setq angle_num_max 2)
   (setq bik-list ())
-  (push (balancer-ik -0.3) bik-list) ;; 6
-  (push (balancer-ik -0.2) bik-list) ;; 5
-  (push (balancer-ik -0.1) bik-list) ;; 4
-  (push (balancer-ik -0.0) bik-list) ;; 3
-  (push (balancer-ik 0.1) bik-list) ;; 2
+  ;; (push (balancer-ik -0.3) bik-list) ;; 6
+  ;; (push (balancer-ik -0.2) bik-list) ;; 5
+  ;; (push (balancer-ik -0.1) bik-list) ;; 4
+  ;; (push (balancer-ik -0.2) bik-list) ;; 3
+  (push (balancer-ik 0.0) bik-list) ;; 2
   (push (balancer-ik 0.2) bik-list) ;; 1
-  (push (balancer-ik 0.3) bik-list) ;; 0
+  (push (balancer-ik 0.4) bik-list) ;; 0
   )
 
 ;; 先に解いておいたikの姿勢で実機を動かす
@@ -90,11 +90,29 @@
 
 ;; 先に解いておいたikの姿勢で、持つ姿勢にする
 (defun bik-ri-init ()
-  (send *ri* :angle-vector (elt bik-list 0)))
+  (setq angle_num 0)
+  (send *ri* :angle-vector (elt bik-list angle_num))
+  (send *ri* :wait-interpolation)
+  )
+
+(defun bik-ri-init-fast ()
+  (setq angle_num 0)
+  (send *ri* :angle-vector (elt bik-list angle_num) 1.0)
+  (send *ri* :wait-interpolation)
+  )
 
 ;; 0,1,2のいずれかが与えられたとき、0なら角度-1, 1なら角度+0, 2なら角度+1する
-(defun change_angle (change)
+(defun change_angle_012 (change)
   (setq angle_num (+ angle_num (- change 1)))
+  (if (< angle_num 0) (setq angle_num 0))
+  (if (> angle_num angle_num_max) (setq angle_num angle_num_max))
+  (bik-ri-p angle_num)
+  (/ (float angle_num) (float angle_num_max))
+  )
+
+;; 0,1のいずれかが与えられたとき、0なら角度-1, 1なら角度+1する
+(defun change_angle (change)
+  (setq angle_num (if (= change 0) (- angle_num 1) (+ angle_num 1)))
   (if (< angle_num 0) (setq angle_num 0))
   (if (> angle_num angle_num_max) (setq angle_num angle_num_max))
   (bik-ri-p angle_num)

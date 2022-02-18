@@ -18,7 +18,15 @@ from jsk_2021_10_semi.msg import *
 
 from DQN import *
 
-# 画像topicを受け取り、緑色かどうかで2値化してグレースケール画像を作る
+"""
+うまくいったパラメータ
+試行30回、30回
+層[3,20,20,2]
+学習係数0.5
+gamma=0.3
+epsilon: 0.5から線形
+reward scale: 1.0
+"""
 
 class image_converter:
 
@@ -30,15 +38,24 @@ class image_converter:
         self.bridge = CvBridge()
         
         self.timer = time.time()
+
+        self.trial_count = 0
+        self.trial_count_max = 30
         
         # dqn
-        self.net = dqn([3, 10, 10, 3])
+        self.net = dqn([3, 20, 20, 2])
         self.net.set_func([tanh(), tanh(), identify()])
-        self.net.set_rate_all(0.3)
+        self.net.set_rate_all(0.5)
         self.epsilon = 0.5
-        self.gamma = 0.5
+        self.gamma = 0.3
 
-        self.count_max = 100
+        self.count_max = 30
+
+        # 学習スタート
+        goal = YoshimuraGoal()
+        goal.yoshimura_goal_change = 100
+        self.client.send_goal(goal)
+        self.client.wait_for_result()
 
         self.reset()
 
@@ -54,23 +71,32 @@ class image_converter:
         # 行動用変数
         self.action = 0
         # 報酬用変数
-        self.reward = 0
+        self.reward = 0.0
+
+        self.reward_sum = 0.0
 
         # collect開始
         self.net.collect_init()
 
+        # 実機の角度初期化
+        goal = YoshimuraGoal()
+        goal.yoshimura_goal_change = -99
+        self.client.send_goal(goal)
+        self.client.wait_for_result()
+
         # pc camera
         # rosrun usb_cam usb_cam_node
-        self.image_sub = rospy.Subscriber("/usb_cam/image_raw", Image, self.callback, queue_size=1, buff_size=2**24)
+        # self.image_sub = rospy.Subscriber("/usb_cam/image_raw", Image, self.callback, queue_size=1, buff_size=2**24)
         # self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image,self.callback)
-
+        self.image_sub = rospy.Subscriber("/nao_robot/naoqi_driver/camera/bottom/image_raw", Image, self.callback, queue_size=1, buff_size=2**24)
+        print("reset complete")
 
     def callback(self,data):
 
         # 1. ここでaction=角度の変化を指定、goalとして送信
         goal = YoshimuraGoal()
         goal.yoshimura_goal_change = self.action
-        print(self.action)
+        # print("action="+str(self.action))
         self.client.send_goal(goal)
         
         # 2. ここで画像処理、NNの処理
@@ -124,6 +150,9 @@ class image_converter:
 
         # これで状態が揃ったのでNNに処理させる
         state_for_play = np.array([self.state_p, self.state_po, self.state_a]).reshape(3,1)
+        # epsilonの更新
+        # self.epsilon = 0.8 * (1.0 / (float(self.trial_count) + 1.0))
+        self.epsilon = 0.5 - 0.5 * float(self.trial_count) / float(self.trial_count_max)
         self.action = self.net.play(state_for_play, self.epsilon)[0]
 
         # NNのニューロンの値を記録（最後以外）
@@ -138,9 +167,11 @@ class image_converter:
         # 報酬を収集
         # 報酬は現在の状態を使って計算してよい（学習時は一つ先の報酬を使用する）
         self.reward = 1.0 - 2.0 * self.state_p
+        self.reward *= 1.0
         self.reward_list.append(self.reward)
+        self.reward_sum += self.reward
 
-        print(self.reward)
+        # print(self.reward)
 
         cv2.imshow("img", img)
         cv2.imshow("gray", gray2)
@@ -157,7 +188,7 @@ class image_converter:
         self.state_a = result.yoshimura_result_angle
         # print("Result %d"%(self.state_a))
         # print(self.state_p, self.state_po, self.state_a)
-        print(self.state_a)
+        print("action="+ str(self.action) + ", angle=" + str(self.state_a) + ", pre_reward=" + str(self.reward) + ", eps="+str(self.epsilon))
 
         # 5. 全行動が終了したら学習
         self.count += 1
@@ -167,12 +198,18 @@ class image_converter:
             
     def learn(self):
         print("learn!")
+        print("trial "+str(self.trial_count) + ", reward_sum="+str(self.reward_sum))
+        self.trial_count += 1
+        if self.trial_count >= self.trial_count_max:
+            print("finish!")
+            self.__del__()
+            return
         self.image_sub.unregister()
         state = np.array(self.state_list)[:-1]
         action = np.array(self.action_list)[:-1]
         reward = np.array(self.reward_list)[1:]
         x_all = self.net.collect_end()
-        mask_observed_01 = np.zeros((3, action.size))
+        mask_observed_01 = np.zeros((2, action.size))
         mask_observed_01[action, np.arange(action.size)] = 1
         mask_observed = (mask_observed_01 == 1)
         state_next = np.array(self.state_list)[1:].T
@@ -181,6 +218,14 @@ class image_converter:
         label = x_all[-1]
         label[mask_observed] = label_onedim
         self.net.update(label)
+
+        # 結果を喋る
+        goal = YoshimuraGoal()
+        goal.yoshimura_goal_change = 88
+        goal.yoshimura_goal_num = self.trial_count
+        goal.yoshimura_goal_score = int(self.reward_sum)
+        self.client.send_goal(goal)
+        self.client.wait_for_result()
 
         # time.sleep(3)
 
